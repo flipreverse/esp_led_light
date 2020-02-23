@@ -1,0 +1,46 @@
+menu "Led Light"
+
+config LED_LIGHT_DEFAULT_OPTIONS
+    string
+    select LOG_SET_LEVEL
+
+config WIFI_SSID
+    string "WiFi SSID"
+    default "myssid"
+    help
+        SSID (network name) for the example to connect to.
+
+config WIFI_PASSWORD
+    string "WiFi Password"
+    default "mypassword"
+    help
+        WiFi password (WPA or WPA2) for the example to use.
+
+config BROKER_URL
+    string "Broker URL"
+    default "mqtt://iot.eclipse.org"
+    help
+        URL of the broker to connect to
+
+config BROKER_USER
+   string "Broker Username"
+   default ""
+   help
+       Username used to connect to broker
+
+config BROKER_PASSWORD
+   string "Broker Password"
+   default ""
+   help
+       Password used to connect to broker
+
+config ENABLE_DEBUG
+   bool "Enable debugging"
+   default N
+   depends on LOG_DEFAULT_LEVEL_VERBOSE
+   help
+       Makes the binary state of the light available via another GPIO pin. This includes the onboard LED as well.
+       Additionally, make the system more verbose.
+
+
+endmenu
