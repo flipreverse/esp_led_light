@@ -4,6 +4,24 @@ config LED_LIGHT_DEFAULT_OPTIONS
     string
     select LOG_SET_LEVEL
 
+config IP_ADDRESS
+    string "The device's IP address"
+    default 192.168.0.180
+    help
+        Specifies the device's IP address
+
+config NETMASK
+    string "The device's netmask"
+    default 255.255.255.0
+    help
+        Specifies the device's netmask
+
+config GATEWAY
+    string "The device's gateway IP address"
+    default 192.168.0.1
+    help
+        Specifies the device's gateway IP address
+
 config WIFI_SSID
     string "WiFi SSID"
     default "myssid"

@@ -237,6 +237,10 @@ static void setupDevice(void) {
 		},
 	};
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	tcpip_adapter_ip_info_t ip_config;
+	ip4addr_aton(CONFIG_IP_ADDRESS, &ip_config.ip);
+	ip4addr_aton(CONFIG_NETMASK, &ip_config.netmask);
+	ip4addr_aton(CONFIG_GATEWAY, &ip_config.gw);
 
 	// Initialize nvs flash
 	nvs_flash_init();
@@ -272,6 +276,8 @@ static void setupDevice(void) {
 
 	// Init WiFi
 	tcpip_adapter_init();
+	tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+	tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &ip_config);
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(wifiEventHandler, NULL));
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -299,6 +305,7 @@ void app_main()
 	esp_log_level_set("*", ESP_LOG_WARN);
 #ifdef CONFIG_ENABLE_DEBUG
 	esp_log_level_set(TAG, ESP_LOG_VERBOSE);
+	esp_log_level_set("tcpip_adapter", ESP_LOG_VERBOSE);
 #else
 	esp_log_level_set(TAG, ESP_LOG_WARN);
 #endif
