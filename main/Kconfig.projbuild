@@ -4,21 +4,30 @@ config LED_LIGHT_DEFAULT_OPTIONS
     string
     select LOG_SET_LEVEL
 
+config USE_STATIC_IP
+    bool "Use a static IP"
+    default false
+    help
+        Use a static IP address in order to save energy
+
 config IP_ADDRESS
     string "The device's IP address"
     default 192.168.0.180
+    depends on USE_STATIC_IP
     help
         Specifies the device's IP address
 
 config NETMASK
     string "The device's netmask"
     default 255.255.255.0
+    depends on USE_STATIC_IP
     help
         Specifies the device's netmask
 
 config GATEWAY
     string "The device's gateway IP address"
     default 192.168.0.1
+    depends on USE_STATIC_IP
     help
         Specifies the device's gateway IP address
 
