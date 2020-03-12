@@ -28,8 +28,7 @@
 #define LED_SWITCH_STATE_TOPIC "homeassistant/custom/led_light/state"
 #ifdef CONFIG_ENABLE_DEBUG
 #define LED_PIN GPIO_NUM_2
-#define TRANSISTOR_BINARY_PIN GPIO_NUM_15
-#define GPIO_PIN_SEL ((1 << LED_PIN) | (1 << TRANSISTOR_BINARY_PIN))
+#define GPIO_PIN_SEL ((1 << LED_PIN))
 #endif
 // 1kHz of PWM frequency
 #define PWM_PERIOD (1000)
@@ -48,7 +47,6 @@ static void setLED(void) {
 	if (stateValue) {
 #ifdef CONFIG_ENABLE_DEBUG
 		gpio_set_level(LED_PIN, 0);
-		gpio_set_level(TRANSISTOR_BINARY_PIN, 1);
 #endif
 		dutyCycle = (double)brightnessValue / 255.0 * ((double)PWM_PERIOD);
 		ESP_LOGI(TAG, "Turning on!");
@@ -58,7 +56,6 @@ static void setLED(void) {
 	} else {
 #ifdef CONFIG_ENABLE_DEBUG
 		gpio_set_level(LED_PIN, 1);
-		gpio_set_level(TRANSISTOR_BINARY_PIN, 0);
 #endif
 		pwm_stop(0);
 		ESP_LOGI(TAG, "Turning off!");
@@ -261,9 +258,6 @@ static void setupDevice(void) {
 	//configure GPIO with the given settings
 	if (gpio_config(&io_conf) != ESP_OK) {
 		ESP_LOGE(TAG, "Cannot configure LED pins");
-	}
-	if (gpio_pulldown_en(TRANSISTOR_BINARY_PIN) != ESP_OK) {
-		ESP_LOGE(TAG, "Cannot set pull-down resistor for GPIO %d", TRANSISTOR_BINARY_PIN);
 	}
 #endif
 	// Initialize PWM controller
