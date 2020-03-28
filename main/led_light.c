@@ -27,13 +27,13 @@
 #define LED_SWITCH_SET_TOPIC "homeassistant/custom/led_light/set"
 #define LED_SWITCH_STATE_TOPIC "homeassistant/custom/led_light/state"
 #ifdef CONFIG_ENABLE_DEBUG
-#define LED_PIN GPIO_NUM_2
+#define LED_PIN GPIO_NUM_1
 #define GPIO_PIN_SEL ((1 << LED_PIN))
 #endif
 // 1kHz of PWM frequency
 #define PWM_PERIOD (1000)
 #define PWM_CHANNELS (1)
-#define TRANSISTOR_PWM_PIN GPIO_NUM_4
+#define TRANSISTOR_PWM_PIN GPIO_NUM_2
 
 static const char *TAG = "LED_LIGHT";
 
