@@ -7,6 +7,7 @@
 #include "nvs_flash.h"
 #include "esp_event_loop.h"
 #include "cJSON.h"
+#include "esp_sleep.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -26,7 +27,7 @@
 
 #define LED_SWITCH_SET_TOPIC "homeassistant/custom/led_light/set"
 #define LED_SWITCH_STATE_TOPIC "homeassistant/custom/led_light/state"
-#ifdef CONFIG_ENABLE_DEBUG
+#if defined(CONFIG_ENABLE_DEBUG) || defined(CONFIG_USE_SLEEP_MODE)
 #define LED_PIN GPIO_NUM_1
 #define GPIO_PIN_SEL ((1 << LED_PIN))
 #endif
@@ -37,6 +38,9 @@
 
 static const char *TAG = "LED_LIGHT";
 
+#ifdef CONFIG_USE_SLEEP_MODE
+static EventGroupHandle_t mqttEventGroup;
+#endif
 static EventGroupHandle_t wifi_event_group;
 const static int CONNECTED_BIT = BIT0;
 static int brightnessValue = 255;
@@ -45,7 +49,7 @@ static int stateValue = 0;
 static void setLED(void) {
 	double dutyCycle = 0.0;
 	if (stateValue) {
-#ifdef CONFIG_ENABLE_DEBUG
+#if defined(CONFIG_ENABLE_DEBUG) && !defined(CONFIG_USE_SLEEP_MODE)
 		gpio_set_level(LED_PIN, 0);
 #endif
 		dutyCycle = (double)brightnessValue / 255.0 * ((double)PWM_PERIOD);
@@ -54,7 +58,7 @@ static void setLED(void) {
 		pwm_set_duty(0, (uint32_t)dutyCycle);
 		pwm_start();
 	} else {
-#ifdef CONFIG_ENABLE_DEBUG
+#if defined(CONFIG_ENABLE_DEBUG) && !defined(CONFIG_USE_SLEEP_MODE)
 		gpio_set_level(LED_PIN, 1);
 #endif
 		pwm_stop(0);
@@ -157,6 +161,9 @@ static esp_err_t mqttEventHandler(esp_mqtt_event_handle_t event)
 				break;
 			}
 			ESP_LOGI(TAG, "Connected broker '%s' as user '%s'", CONFIG_BROKER_URL, CONFIG_BROKER_USER);
+#ifdef CONFIG_USE_SLEEP_MODE
+			xEventGroupSetBits(mqttEventGroup, CONNECTED_BIT);
+#endif
 			break;
 		}
 
@@ -221,7 +228,7 @@ static esp_err_t wifiEventHandler(void *ctx, system_event_t *event)
 }
 
 static void setupDevice(void) {
-#ifdef CONFIG_ENABLE_DEBUG
+#if defined(CONFIG_ENABLE_DEBUG) || defined(CONFIG_USE_SLEEP_MODE)
 	gpio_config_t io_conf;
 #endif
 	int16_t pwmPhase[PWM_CHANNELS] = { 0 };
@@ -243,7 +250,7 @@ static void setupDevice(void) {
 
 	// Initialize nvs flash
 	nvs_flash_init();
-#ifdef CONFIG_ENABLE_DEBUG
+#if defined(CONFIG_ENABLE_DEBUG) || defined(CONFIG_USE_SLEEP_MODE)
 	// Set up LED
 	//disable interrupt
 	io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -322,6 +329,24 @@ void app_main()
 	// Initialize peripherals
 	setupDevice();
 	// Start up MQTT client
+#ifdef CONFIG_USE_SLEEP_MODE
+	gpio_set_level(LED_PIN, 0);
+	mqttEventGroup = xEventGroupCreate();
+#endif
 	client = esp_mqtt_client_init(&mqtt_cfg);
 	esp_mqtt_client_start(client);
+#ifdef CONFIG_USE_SLEEP_MODE
+	// Wait until the MQTT client has connected successfully
+	xEventGroupWaitBits(mqttEventGroup, CONNECTED_BIT, false, true, portMAX_DELAY);
+	// Sleep for 1 second in order to receive any MQTT messages
+	ESP_LOGD(TAG, "Waiting a bit...");
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+	ESP_LOGD(TAG, "Entering deep sleep");
+	esp_mqtt_client_destroy(client);
+	esp_wifi_stop();
+	// Enter chip's deep sleep
+	esp_deep_sleep_set_rf_option(0);
+	gpio_set_level(LED_PIN, 1);
+	esp_deep_sleep(CONFIG_WAKEUP_INTERVAL * 1000);
+#endif
 }

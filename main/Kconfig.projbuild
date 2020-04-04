@@ -4,6 +4,19 @@ config LED_LIGHT_DEFAULT_OPTIONS
     string
     select LOG_SET_LEVEL
 
+config USE_SLEEP_MODE
+    bool "Use the device's sleep"
+    default N
+    help
+        Wake up after a configured interval, look for changes and fall asleep again.
+
+config WAKEUP_INTERVAL
+    int "WakeUp Interval"
+    default 1500
+    depends on USE_SLEEP_MODE
+    help
+        Wakeup interval in miliseconds
+
 config USE_STATIC_IP
     bool "Use a static IP"
     default false
